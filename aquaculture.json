@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "aquaculture-af54d",
+  "private_key_id": "7573ccbc5eb383ba120e23b00471c5406ab196fd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDCvbwflNFEcqcx\nbBD1+lOfWfME+Kgg0hvrjc3I/mNJqKGMSn7HvAamOuIE0EP3q1Rt4iUBxiOxMSbh\nT3hy8/NAeDqHoeRQVGnKNBzL6mLVKPvbqmaX2ZK4wLshvo2Pij/+mUylMDxyrbjQ\n0Zxh/sx2F6R7btUMC4xpHW3SwTdyEnTgMyP5HfQcpKhVAFlXPlXzGYSap9oXGsHs\nevNUzw83gUos6tYGmY0VbqaK+Gml/zfjsqbb9lljL/rqxaf0uR82WccR5Eb28fvx\n4Yog63WH5HGluFDZBPyfc8PblIw9/ZbtwETnH8vvagxr6Ey8kw+5SqcLkYxJ5vFF\nJonPg/izAgMBAAECggEAALRI8uBJ5XJ4slAOu6T9Gm1r2I/Bo+S+nxpzLQ/mcgS/\nGM/IJ5bBe2ZpHNVX+ZRQCNmxgpEh3eksl9H+wIOrVIdaxtTKC5RSkZ2goQgm9Vhh\nmMjD+DacNjjUNGoI/wTj+Fq7kTlcbpm8Ol0XsK8INEEfoiajdJiyGEs383QpbCst\nSnVr/Z6ET6//PNr0Shqedtj6a5Oa21EQK2Xyn3frGGiB/1W5dU/wONnhcB/shf7H\nLnpGaE/Vpu+9tiCRIRCA3pYx4JD/Vfy+3YbO9rTIcQ4NpaeLswdvG7b1HeHe4Geq\nSrovSZ6B0V3YpcX2R9FZGesNOaZAfjx+WDx3Mv3IUQKBgQD8mHDkAQMD3U5KWXg/\nPuCTT91wGJ5hQ9QLkzwkyc1sqe/0c52TD+MU8ranmkvkDAzSyZQYEf+K/i9gNQWg\nRei2gZelAUStjCp3Zyy+EbIS5z+1JZ46cyzwFCptzU+nymvyDhXu3RmuRHZ4LMmZ\nTMXokdMsvoWSXDIakPEsEe/iaQKBgQDFXawpPcSZnPqiMVUtea4ov+vbvWtMn4PB\nu2n9nvHnVL9YDdr8to3tBXF4/lM/ekvbpPfLuYAGz4OvYB26TxNzaRO5i+XqckCn\n5LZth2WDNSwUT0k7lToyMHs0vlmtELA3WkovXWsuAbpQm1sh2g8hdzvp4Zg+iC9Z\nskDHGn4muwKBgQCSy+j3qNreuRORw/NNFjafhg+T4MrSjf/ChluyqZD38L7iGvrd\nh6MZ/oBGYTZvns0pBztIzdTsKxLPX6EYZuh6gE/n9he6oDXh1JU9FL2fnML6fJU7\nNMpN7/pEe8gqJEqdjrASdG5DR8htyOGUdPijU3Qdkc/AolH//HIcgYQe2QKBgAYa\ntpdz9J+3rjzT/8lvSQazoOzj9+yfxmh4jnessdiw01Y633oPf2ZEU9UlMJf3BV+e\nw5dGfoI3auBCvcikZ3qbVmPXwt20ePF4bngGxwn+3AUoyqAQJoOk4jqoZIeoy3p6\nzW6XmhgLL6MMmw35+5vSX0UFmDre5XAFxmEiHaK/AoGAClD8vwcZBG9wlrBuZuBi\nCXBPiifYzio2Mhsg2EdlMTCmrdBwLY4ijjj8OVZkwUDsgnGhoiuydAQK/5mwDdkg\naLnsZRNST6mPMxyatnDxRt7MKoVhjRv2i/iuiIeGhPkju3NU6wyN1aueSF1bT7Pw\nxAqRU/k3qkVNNTynOUHe34A=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@aquaculture-af54d.iam.gserviceaccount.com",
+  "client_id": "100428811094202331480",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40aquaculture-af54d.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
