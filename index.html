@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AQUA·INTELLIGENCE | Live Dashboard</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS Variables for Theme ===== */
+        :root {
+            --bg: #0a0e27;
+            --surface: #141a33;
+            --surface-light: #1a2245;
+            --text: #e0e0e0;
+            --text-secondary: #8892b0;
+            --border: #233065;
+            --card-bg: rgba(20, 26, 51, 0.8);
+            --shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --accent: #00d4ff;
+            --success: #00e676;
+            --warning: #ffab00;
+            --danger: #ff5252;
+            --gauge-bg: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface-light: #e8edf3;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --border: #cbd5e1;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
+            --input-bg: #ffffff;
+            --accent: #4f46e5;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --gauge-bg: rgba(0, 0, 0, 0.06);
+        }
+        /* ===== Global Styles ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.4s ease, color 0.4s ease;
+            background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.06), transparent 30%),
+                var(--bg);
+            overflow-x: hidden;
+        }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.4), transparent);
+            animation: drift linear infinite;
+            opacity: 0;
+        }
+        @keyframes drift {
+            0% {
+                transform: translateY(0) translateX(0) scale(0.8);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-120vh) translateX(80px) scale(1.2);
+                opacity: 0;
+            }
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.2;
+            pointer-events: none;
+            animation: floatOrb 12s ease-in-out infinite;
+            z-index: 0;
+            transition: opacity 0.4s ease;
+        }
+        .orb1 {
+            width: 280px;
+            height: 280px;
+            top: 40px;
+            right: 6%;
+            background: #8b5cf6;
+        }
+        .orb2 {
+            width: 240px;
+            height: 240px;
+            bottom: 40px;
+            left: 5%;
+            background: #38bdf8;
+            animation-delay: -5s;
+        }
+        [data-theme="light"] .orb {
+            opacity: 0.08;
+        }
+        @keyframes floatOrb {
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-30px) scale(1.05);
+            }
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: 0.3s ease;
+            flex-shrink: 0;
+        }
+        .toggle .slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s ease;
+        }
+        .toggle.active {
+            background: var(--accent);
+        }
+        .toggle.active .slider {
+            left: 23px;
+        }
+        .mode-group {
+            display: flex;
+            background: var(--surface);
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .mode-btn {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+        .mode-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .mode-btn:hover:not(.active) {
+            background: var(--surface-light);
+        }
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00e676;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+        .live-dot.off {
+            animation: none;
+            opacity: 0.3;
+        }
+        .help-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 6px 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: 0.25s ease;
+        }
+        .help-btn:hover {
+            background: var(--surface-light);
+        }
+
+        /* ===== Gauges Row ===== */
+        .gauges-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .gauge-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.4s ease;
+        }
+        .gauge-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+        }
+        .gauge-card .label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+        .gauge-svg {
+            width: 100%;
+            max-width: 140px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .gauge-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 6px;
+            color: var(--text);
+        }
+        .gauge-unit {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* ===== Main Grid ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr 2fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px 28px;
+            box-shadow: var(--shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.4s ease;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+        }
+        .card-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .prediction-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 12px;
+        }
+        .pred-item {
+            flex: 1;
+            min-width: 150px;
+            background: var(--input-bg);
+            border-radius: 18px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            transition: 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .pred-item:hover {
+            background: var(--surface-light);
+        }
+        .pred-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .pred-item .name {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+        .pred-item .conf {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .pred-item.fish .name {
+            color: var(--success);
+        }
+        .pred-item.spice .name {
+            color: var(--warning);
+        }
+        .pred-item img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .badge-low {
+            background: var(--success)22;
+            color: var(--success);
+            border: 1px solid var(--success)44;
+        }
+        .badge-medium {
+            background: var(--warning)22;
+            color: var(--warning);
+            border: 1px solid var(--warning)44;
+        }
+        .badge-high {
+            background: var(--danger)22;
+            color: var(--danger);
+            border: 1px solid var(--danger)44;
+        }
+        .badge-critical {
+            background: #ff174422;
+            color: #ff1744;
+            border: 1px solid #ff174444;
+        }
+
+        .rec-list {
+            list-style: none;
+            padding: 0;
+        }
+        .rec-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            color: var(--text);
+        }
+        .rec-list li::before {
+            content: "• ";
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .advice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .advice-item {
+            background: var(--input-bg);
+            border-radius: 16px;
+            padding: 14px 16px;
+            border-left: 4px solid var(--accent);
+        }
+        .advice-item .param {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .advice-item .action {
+            margin-top: 4px;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .advice-item.urgent {
+            border-left-color: var(--danger);
+        }
+        .advice-item.warning {
+            border-left-color: var(--warning);
+        }
+        .advice-item.good {
+            border-left-color: var(--success);
+        }
+
+        .manual-inputs {
+            display: none;
+            margin-top: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .manual-inputs.active {
+            display: flex;
+        }
+        .manual-inputs input {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 14px;
+            width: 100px;
+            transition: 0.3s ease;
+        }
+        .manual-inputs input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .manual-inputs button {
+            padding: 10px 24px;
+            border-radius: 999px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+        .manual-inputs button:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== Ranking Tables ===== */
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .rank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .rank-table th {
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .rank-table td {
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .rank-table .star {
+            color: #fbbf24;
+        }
+        .rank-table .species-img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .timestamp {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 40px 48px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+        }
+        .modal-box h2 {
+            font-size: 26px;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+        .modal-box p,
+        .modal-box li {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .modal-box ul {
+            padding-left: 20px;
+        }
+        .modal-box .close-btn {
+            margin-top: 24px;
+            padding: 10px 28px;
+            border: none;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1100px) {
+            .gauges-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .advice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            .gauges-row {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .header-controls {
+                justify-content: space-between;
+            }
+            .gauge-svg {
+                max-width: 100px;
+            }
+            .pred-item {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>🌊 AQUA·INTELLIGENCE</h1>
+                <span style="color: var(--text-secondary); font-size: 14px;">Live Aquaculture Monitoring & Predictive Analytics</span>
+            </div>
+            <div class="header-controls">
+                <button class="help-btn" onclick="openModal()">❓</button>
+                <div class="toggle-wrap">
+                    <span>☀️</span>
+                    <div class="toggle" id="themeToggle" onclick="toggleTheme()">
+                        <div class="slider"></div>
+                    </div>
+                    <span>🌙</span>
+                </div>
+                <div class="mode-group">
+                    <button class="mode-btn active" data-mode="auto" onclick="setMode('auto')">Auto</button>
+                    <button class="mode-btn" data-mode="manual" onclick="setMode('manual')">Manual</button>
+                </div>
+                <div class="live-indicator">
+                    <span class="live-dot" id="liveDot"></span>
+                    <span id="liveLabel">Live</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gauges Row -->
+        <div class="gauges-row" id="gaugesRow">
+            <div class="gauge-card" id="gaugePh">
+                <div class="label">pH</div>
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-bg)" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="0 314" id="gaugePhArc"/>
+                    <text x="60" y="60" text-anchor="middle" dy="0.3em" fill="var(--text)" font-size="22" font-weight="700" id="gaugePhVal">--</text>
+                </svg>
+                <div class="gauge-value" id="gaugePhNum">--</div>
+            </div>
+            <div class="gauge-card" id="gaugeTemp">
+                <div class="label">Temperature</div>
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-bg)" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--warning)" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="0 314" id="gaugeTempArc"/>
+                    <text x="60" y="60" text-anchor="middle" dy="0.3em" fill="var(--text)" font-size="22" font-weight="700" id="gaugeTempVal">--</text>
+                </svg>
+                <div class="gauge-value" id="gaugeTempNum">-- °C</div>
+            </div>
+            <div class="gauge-card" id="gaugeTurb">
+                <div class="label">Turbidity</div>
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-bg)" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="0 314" id="gaugeTurbArc"/>
+                    <text x="60" y="60" text-anchor="middle" dy="0.3em" fill="var(--text)" font-size="22" font-weight="700" id="gaugeTurbVal">--</text>
+                </svg>
+                <div class="gauge-value" id="gaugeTurbNum">-- NTU</div>
+            </div>
+            <div class="gauge-card" id="gaugeEc">
+                <div class="label">EC</div>
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-bg)" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="0 314" id="gaugeEcArc"/>
+                    <text x="60" y="60" text-anchor="middle" dy="0.3em" fill="var(--text)" font-size="22" font-weight="700" id="gaugeEcVal">--</text>
+                </svg>
+                <div class="gauge-value" id="gaugeEcNum">-- mS/cm</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Left Column -->
+            <div>
+                <!-- Predictions -->
+                <div class="card">
+                    <div class="card-title">🧠 Predictions</div>
+                    <div class="prediction-box">
+                        <div class="pred-item fish">
+                            <img id="predFishImg" src="" alt="Fish">
+                            <div>
+                                <div class="label">Best Fish Species</div>
+                                <div class="name" id="predFish">--</div>
+                                <div class="conf" id="confFish">Confidence: --</div>
+                            </div>
+                        </div>
+                        <div class="pred-item spice">
+                            <div style="font-size: 32px;">🌿</div>
+                            <div>
+                                <div class="label">Best Herb/Spice</div>
+                                <div class="name" id="predSpice">--</div>
+                                <div class="conf" id="confSpice">Confidence: --</div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:140px;">
+                            <div class="label">Risk Level</div>
+                            <div id="riskBadge" class="status-badge badge-low">--</div>
+                            <div style="margin-top:8px; font-size:14px; color:var(--text-secondary);" id="quality">Quality: --</div>
+                        </div>
+                    </div>
+                    <!-- Manual inputs -->
+                    <div class="manual-inputs" id="manualInputs">
+                        <input type="number" id="manPh" step="0.1" placeholder="pH" value="7.0">
+                        <input type="number" id="manTemp" step="0.1" placeholder="Temp °C" value="26">
+                        <input type="number" id="manTurb" step="0.1" placeholder="Turbidity" value="5">
+                        <button onclick="manualAnalyze()">Analyze</button>
+                    </div>
+                </div>
+
+                <!-- Water Management Advice -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">💧 Water Management Advice</div>
+                    <div class="advice-grid" id="adviceGrid">
+                        <div class="advice-item"><div class="param">pH</div><div class="action">Waiting for data...</div></div>
+                        <div class="advice-item"><div class="param">Temperature</div><div class="action">Waiting for data...</div></div>
+                        <div class="advice-item"><div class="param">Turbidity</div><div class="action">Waiting for data...</div></div>
+                        <div class="advice-item"><div class="param">EC</div><div class="action">Waiting for data...</div></div>
+                    </div>
+                </div>
+
+                <!-- Dataset Comparison Alerts -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">📊 Dataset Comparison Alerts</div>
+                    <ul class="rec-list" id="datasetAlerts">
+                        <li>Waiting for data...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Recommendations -->
+                <div class="card">
+                    <div class="card-title">💡 Recommendations</div>
+                    <ul class="rec-list" id="recList">
+                        <li>Waiting for data...</li>
+                    </ul>
+                </div>
+
+                <!-- Fish Ranking (ALL species) -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">🏆 Fish Compatibility Ranking</div>
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="rank-table" id="fishRankTable">
+                            <thead><tr><th>Rank</th><th>Species</th><th>Score</th><th>Growth</th><th>Value</th><th>Hardiness</th><th>Records</th></tr></thead>
+                            <tbody id="fishRankBody"><tr><td colspan="7" style="text-align:center; color:var(--text-secondary);">No data</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Spice Ranking -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">🌿 Herb/Spice Compatibility Ranking</div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table class="rank-table" id="spiceRankTable">
+                            <thead><tr><th>Rank</th><th>Herb/Spice</th><th>Score</th><th>Growth Time</th><th>Yield</th><th>Difficulty</th></tr></thead>
+                            <tbody id="spiceRankBody"><tr><td colspan="6" style="text-align:center; color:var(--text-secondary);">No data</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timestamp" id="timestamp">🕒 Last updated: --</div>
+    </div>
+
+    <!-- Modal Instructions -->
+    <div class="modal-overlay" id="instructionsModal">
+        <div class="modal-box">
+            <h2>📖 How to Use the Dashboard</h2>
+            <p><strong>Auto Mode</strong> – data is read live from Firebase, then analyzed using the built-in scoring engine.</p>
+            <p><strong>Manual Mode</strong> – enter your own pH, temperature, and turbidity, then click Analyze to get predictions.</p>
+            <ul>
+                <li><strong>Theme Toggle</strong> – switch between dark and light themes.</li>
+                <li><strong>Live Indicator</strong> – blinks green to confirm the system is active.</li>
+                <li><strong>Fish & Spice Predictions</strong> – best species for current water conditions, with confidence scores.</li>
+                <li><strong>Risk & Quality</strong> – overall risk level and water quality assessment.</li>
+                <li><strong>Water Management Advice</strong> – specific actionable steps for each parameter.</li>
+                <li><strong>Dataset Comparison Alerts</strong> – compares current readings against the reference dataset for the predicted fish species.</li>
+                <li><strong>Rankings</strong> – lists of compatible fish and herbs/spices ordered by suitability.</li>
+            </ul>
+            <p><strong>Data Source:</strong> The dashboard reads from Firebase path <code>/aquaculture/sensors</code>. Ensure your ESP8266 is writing data there.</p>
+            <button class="close-btn" onclick="closeModal()">Got it!</button>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // 1. FIREBASE CONFIG
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyACk3Kj9agZgUhYmEKGVt0Ul7avCJSoNxY",
+            authDomain: "aquaculture-af54d.firebaseapp.com",
+            databaseURL: "https://aquaculture-af54d-default-rtdb.firebaseio.com",
+            projectId: "aquaculture-af54d",
+            storageBucket: "aquaculture-af54d.firebasestorage.app",
+            messagingSenderId: "998675976516",
+            appId: "1:998675976516:web:c60d56eedc99744c768711",
+            measurementId: "G-3GDY6FBCQK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ================================================================
+        // 2. DATA: FISH SPECIES RULES + STATS
+        // ================================================================
+        const FISH_SPECIES_RULES = {
+            "Tilapia": {
+                ph: [6.5, 8.5],
+                temperature: [24, 32],
+                turbidity: [0, 10],
+                icon: "🐟",
+                growth_rate: "Fast",
+                market_value: "Medium",
+                hardiness: "High",
+                image_url: "https://ui-avatars.com/api/?name=Tilapia&background=4f46e5&color=fff&size=40"
+            },
+            "Pangas": {
+                ph: [6.5, 8.2],
+                temperature: [24, 30],
+                turbidity: [0, 12],
+                icon: "🐠",
+                growth_rate: "Very Fast",
+                market_value: "High",
+                hardiness: "Medium",
+                image_url: "https://ui-avatars.com/api/?name=Pangas&background=059669&color=fff&size=40"
+            },
+            "Rui": {
+                ph: [6.8, 8.0],
+                temperature: [22, 30],
+                turbidity: [0, 10],
+                icon: "🎏",
+                growth_rate: "Fast",
+                market_value: "High",
+                hardiness: "High",
+                image_url: "https://ui-avatars.com/api/?name=Rui&background=2563eb&color=fff&size=40"
+            },
+            "Katla": {
+                ph: [7.0, 8.5],
+                temperature: [22, 30],
+                turbidity: [0, 10],
+                icon: "🐋",
+                growth_rate: "Fast",
+                market_value: "High",
+                hardiness: "Medium",
+                image_url: "https://ui-avatars.com/api/?name=Katla&background=7c3aed&color=fff&size=40"
+            },
+            "Koi": {
+                ph: [6.5, 8.0],
+                temperature: [24, 30],
+                turbidity: [0, 8],
+                icon: "🪸",
+                growth_rate: "Medium",
+                market_value: "Very High",
+                hardiness: "Medium",
+                image_url: "https://ui-avatars.com/api/?name=Koi&background=dc2626&color=fff&size=40"
+            },
+            "Magur": {
+                ph: [6.5, 8.0],
+                temperature: [24, 32],
+                turbidity: [0, 12],
+                icon: "🐍",
+                growth_rate: "Slow",
+                market_value: "Very High",
+                hardiness: "Very High",
+                image_url: "https://ui-avatars.com/api/?name=Magur&background=ca8a04&color=fff&size=40"
+            },
+            "Sing": {
+                ph: [6.5, 8.0],
+                temperature: [24, 32],
+                turbidity: [0, 12],
+                icon: "🐙",
+                growth_rate: "Medium",
+                market_value: "High",
+                hardiness: "High",
+                image_url: "https://ui-avatars.com/api/?name=Sing&background=0891b2&color=fff&size=40"
+            },
+            "Shrimp": {
+                ph: [7.0, 8.5],
+                temperature: [24, 30],
+                turbidity: [0, 8],
+                icon: "🦐",
+                growth_rate: "Fast",
+                market_value: "Very High",
+                hardiness: "Low",
+                image_url: "https://ui-avatars.com/api/?name=Shrimp&background=db2777&color=fff&size=40"
+            },
+            "Prawn": {
+                ph: [7.0, 8.5],
+                temperature: [24, 31],
+                turbidity: [0, 8],
+                icon: "🦞",
+                growth_rate: "Fast",
+                market_value: "Very High",
+                hardiness: "Medium",
+                image_url: "https://ui-avatars.com/api/?name=Prawn&background=65a30d&color=fff&size=40"
+            },
+            "Silver Cup": {
+                ph: [6.8, 8.2],
+                temperature: [20, 28],
+                turbidity: [0, 10],
+                icon: "🥈",
+                growth_rate: "Slow",
+                market_value: "Medium",
+                hardiness: "Medium",
+                image_url: "https://ui-avatars.com/api/?name=Silver+Cup&background=6b7280&color=fff&size=40"
+            },
+            "Karpio": {
+                ph: [6.8, 8.2],
+                temperature: [20, 28],
+                turbidity: [0, 10],
+                icon: "🐡",
+                growth_rate: "Medium",
+                market_value: "Low",
+                hardiness: "Very High",
+                image_url: "https://ui-avatars.com/api/?name=Karpio&background=92400e&color=fff&size=40"
+            }
+        };
+
+        // Species stats (mean, std, min, max, count) – hardcoded from dataset
+        const SPECIES_STATS = {
+            "Tilapia": { ph_mean: 7.2, ph_std: 0.4, ph_min: 6.5, ph_max: 8.5, temperature_mean: 28.0, temperature_std: 1.8,
+                temperature_min: 24, temperature_max: 32, turbidity_mean: 4.5, turbidity_std: 1.2, turbidity_min: 0,
+                turbidity_max: 10, count: 45 },
+            "Pangas": { ph_mean: 7.0, ph_std: 0.5, ph_min: 6.5, ph_max: 8.2, temperature_mean: 27.0, temperature_std: 1.5,
+                temperature_min: 24, temperature_max: 30, turbidity_mean: 5.0, turbidity_std: 1.5, turbidity_min: 0,
+                turbidity_max: 12, count: 38 },
+            "Rui": { ph_mean: 7.4, ph_std: 0.3, ph_min: 6.8, ph_max: 8.0, temperature_mean: 26.0, temperature_std: 1.2,
+                temperature_min: 22, temperature_max: 30, turbidity_mean: 4.0, turbidity_std: 1.0, turbidity_min: 0,
+                turbidity_max: 10, count: 52 },
+            "Katla": { ph_mean: 7.6, ph_std: 0.4, ph_min: 7.0, ph_max: 8.5, temperature_mean: 26.5, temperature_std: 1.3,
+                temperature_min: 22, temperature_max: 30, turbidity_mean: 4.2, turbidity_std: 1.1, turbidity_min: 0,
+                turbidity_max: 10, count: 30 },
+            "Koi": { ph_mean: 7.1, ph_std: 0.5, ph_min: 6.5, ph_max: 8.0, temperature_mean: 27.5, temperature_std: 1.6,
+                temperature_min: 24, temperature_max: 30, turbidity_mean: 3.8, turbidity_std: 0.9, turbidity_min: 0,
+                turbidity_max: 8, count: 28 },
+            "Magur": { ph_mean: 7.0, ph_std: 0.6, ph_min: 6.5, ph_max: 8.0, temperature_mean: 28.5, temperature_std: 1.9,
+                temperature_min: 24, temperature_max: 32, turbidity_mean: 5.5, turbidity_std: 1.8, turbidity_min: 0,
+                turbidity_max: 12, count: 22 },
+            "Sing": { ph_mean: 7.0, ph_std: 0.5, ph_min: 6.5, ph_max: 8.0, temperature_mean: 28.0, temperature_std: 1.7,
+                temperature_min: 24, temperature_max: 32, turbidity_mean: 5.2, turbidity_std: 1.6, turbidity_min: 0,
+                turbidity_max: 12, count: 18 },
+            "Shrimp": { ph_mean: 7.8, ph_std: 0.3, ph_min: 7.0, ph_max: 8.5, temperature_mean: 27.0, temperature_std: 1.4,
+                temperature_min: 24, temperature_max: 30, turbidity_mean: 3.5, turbidity_std: 0.8, turbidity_min: 0,
+                turbidity_max: 8, count: 40 },
+            "Prawn": { ph_mean: 7.7, ph_std: 0.4, ph_min: 7.0, ph_max: 8.5, temperature_mean: 27.5, temperature_std: 1.5,
+                temperature_min: 24, temperature_max: 31, turbidity_mean: 3.6, turbidity_std: 0.9, turbidity_min: 0,
+                turbidity_max: 8, count: 35 },
+            "Silver Cup": { ph_mean: 7.5, ph_std: 0.5, ph_min: 6.8, ph_max: 8.2, temperature_mean: 24.0, temperature_std: 1.8,
+                temperature_min: 20, temperature_max: 28, turbidity_mean: 4.8, turbidity_std: 1.2, turbidity_min: 0,
+                turbidity_max: 10, count: 15 },
+            "Karpio": { ph_mean: 7.3, ph_std: 0.5, ph_min: 6.8, ph_max: 8.2, temperature_mean: 24.5, temperature_std: 1.7,
+                temperature_min: 20, temperature_max: 28, turbidity_mean: 4.6, turbidity_std: 1.3, turbidity_min: 0,
+                turbidity_max: 10, count: 20 }
+        };
+
+        // ================================================================
+        // 3. DATA: SPICE RULES
+        // ================================================================
+        const SPICE_RULES = {
+            "Basil": { ph: [5.5, 6.5], temperature: [20, 30], ec: [1.0, 1.6], icon: "🌿", growth_time: "30-40 days",
+                yield: "High", difficulty: "Easy" },
+            "Mint": { ph: [6.0, 7.0], temperature: [18, 25], ec: [1.2, 1.8], icon: "🍃", growth_time: "40-50 days",
+                yield: "Very High", difficulty: "Easy" },
+            "Coriander": { ph: [6.0, 7.0], temperature: [18, 25], ec: [1.0, 1.5], icon: "🌱", growth_time: "30-40 days",
+                yield: "Medium", difficulty: "Easy" },
+            "Dill": { ph: [5.5, 6.5], temperature: [18, 24], ec: [0.8, 1.4], icon: "🌿", growth_time: "40-50 days",
+                yield: "Medium", difficulty: "Moderate" },
+            "Parsley": { ph: [5.5, 6.5], temperature: [18, 25], ec: [1.0, 1.6], icon: "🌿", growth_time: "50-70 days",
+                yield: "Medium", difficulty: "Moderate" },
+            "Chives": { ph: [6.0, 7.0], temperature: [15, 25], ec: [1.0, 1.8], icon: "🧅", growth_time: "60-80 days",
+                yield: "High", difficulty: "Easy" },
+            "Oregano": { ph: [6.0, 7.5], temperature: [18, 27], ec: [0.8, 1.6], icon: "🌿", growth_time: "40-50 days",
+                yield: "Medium", difficulty: "Easy" },
+            "Thyme": { ph: [5.5, 7.0], temperature: [18, 26], ec: [0.8, 1.5], icon: "🌿", growth_time: "50-60 days",
+                yield: "Low", difficulty: "Moderate" },
+            "Rosemary": { ph: [5.5, 7.0], temperature: [20, 28], ec: [1.0, 1.6], icon: "🌿", growth_time: "60-90 days",
+                yield: "Low", difficulty: "Hard" },
+            "Sage": { ph: [5.5, 6.5], temperature: [18, 25], ec: [1.0, 1.6], icon: "🌿", growth_time: "60-80 days",
+                yield: "Medium", difficulty: "Moderate" },
+            "Lettuce": { ph: [5.5, 6.5], temperature: [15, 22], ec: [0.8, 1.2], icon: "🥬", growth_time: "30-40 days",
+                yield: "Very High", difficulty: "Easy" },
+            "Spinach": { ph: [6.0, 7.0], temperature: [15, 22], ec: [0.8, 1.5], icon: "🥬", growth_time: "40-50 days",
+                yield: "High", difficulty: "Easy" }
+        };
+
+        // ================================================================
+        // 4. SCORING FUNCTIONS (JavaScript)
+        // ================================================================
+        function scoreFish(ph, temperature, turbidity) {
+            const scored = [];
+            for (const [species, rule] of Object.entries(FISH_SPECIES_RULES)) {
+                let score = 0;
+                if (ph >= rule.ph[0] && ph <= rule.ph[1]) score++;
+                if (temperature >= rule.temperature[0] && temperature <= rule.temperature[1]) score++;
+                if (turbidity >= rule.turbidity[0] && turbidity <= rule.turbidity[1]) score++;
+                const stats = SPECIES_STATS[species] || { count: 0 };
+                scored.push({
+                    species: species,
+                    score: score,
+                    icon: rule.icon,
+                    growth_rate: rule.growth_rate,
+                    market_value: rule.market_value,
+                    hardiness: rule.hardiness,
+                    image_url: rule.image_url,
+                    count: stats.count || 0
+                });
+            }
+            scored.sort((a, b) => b.score - a.score);
+            return scored;
+        }
+
+        function scoreSpice(ph, temperature, ec) {
+            const scored = [];
+            for (const [spice, rule] of Object.entries(SPICE_RULES)) {
+                let score = 0;
+                if (ph >= rule.ph[0] && ph <= rule.ph[1]) score++;
+                if (temperature >= rule.temperature[0] && temperature <= rule.temperature[1]) score++;
+                if (ec >= rule.ec[0] && ec <= rule.ec[1]) score++;
+                scored.push({
+                    spice: spice,
+                    score: score,
+                    icon: rule.icon,
+                    growth_time: rule.growth_time,
+                    yield: rule.yield,
+                    difficulty: rule.difficulty
+                });
+            }
+            scored.sort((a, b) => b.score - a.score);
+            return scored;
+        }
+
+        // ================================================================
+        // 5. CONFIDENCE FROM SCORE
+        // ================================================================
+        function confidenceFromScore(score, maxScore) {
+            if (maxScore === 0) return 0;
+            return (score / maxScore) * 100;
+        }
+
+        // ================================================================
+        // 6. WATER ANALYSIS (JavaScript)
+        // ================================================================
+        function analyzeWater(ph, temperature, turbidity) {
+            const ec = 0.5 + turbidity * 0.1;
+            const problems = [];
+            const suggestions = [];
+
+            // General health checks
+            if (ph < 6.5) {
+                problems.push("pH too low (acidic)");
+                suggestions.push("Add agricultural lime slowly.");
+            } else if (ph > 8.5) {
+                problems.push("pH too high (alkaline)");
+                suggestions.push("Use buffering or partial water change.");
+            }
+            if (temperature < 20) {
+                problems.push("Temperature too low");
+                suggestions.push("Use heater or choose cold‑tolerant species.");
+            } else if (temperature > 32) {
+                problems.push("Temperature too high");
+                suggestions.push("Add shade, improve aeration, refresh water.");
+            }
+            if (turbidity > 10) {
+                problems.push("Turbidity high");
+                suggestions.push("Improve filtration, reduce feed waste, partial water change.");
+            }
+
+            // ---- Ranking ----
+            const fishRanking = scoreFish(ph, temperature, turbidity);
+            const spiceRanking = scoreSpice(ph, temperature, ec);
+
+            const bestFish = fishRanking.length > 0 ? fishRanking[0] : null;
+            const bestSpice = spiceRanking.length > 0 ? spiceRanking[0] : null;
+
+            const predictedFish = bestFish ? bestFish.species : "Unknown";
+            const predictedFishImage = bestFish ? bestFish.image_url : "";
+            const confFish = bestFish ? confidenceFromScore(bestFish.score, 3) : 0;
+            const predictedSpice = bestSpice ? bestSpice.spice : "Unknown";
+            const confSpice = bestSpice ? confidenceFromScore(bestSpice.score, 3) : 0;
+
+            // ---- Dataset comparison alerts ----
+            const datasetAlerts = [];
+            if (predictedFish in SPECIES_STATS) {
+                const stats = SPECIES_STATS[predictedFish];
+                const phDiff = Math.abs(ph - stats.ph_mean);
+                const tempDiff = Math.abs(temperature - stats.temperature_mean);
+                const turbDiff = Math.abs(turbidity - stats.turbidity_mean);
+                if (phDiff > 2 * stats.ph_std) {
+                    datasetAlerts.push(
+                        `pH significantly differs from typical ${predictedFish} (mean ${stats.ph_mean.toFixed(2)} ± ${stats.ph_std.toFixed(2)})`
+                        );
+                } else if (phDiff > stats.ph_std) {
+                    datasetAlerts.push(
+                        `pH slightly off from typical ${predictedFish} (mean ${stats.ph_mean.toFixed(2)} ± ${stats.ph_std.toFixed(2)})`
+                        );
+                }
+                if (tempDiff > 2 * stats.temperature_std) {
+                    datasetAlerts.push(
+                        `Temperature significantly differs from typical ${predictedFish} (mean ${stats.temperature_mean.toFixed(1)} ± ${stats.temperature_std.toFixed(1)})`
+                        );
+                } else if (tempDiff > stats.temperature_std) {
+                    datasetAlerts.push(
+                        `Temperature slightly off from typical ${predictedFish} (mean ${stats.temperature_mean.toFixed(1)} ± ${stats.temperature_std.toFixed(1)})`
+                        );
+                }
+                if (turbDiff > 2 * stats.turbidity_std) {
+                    datasetAlerts.push(
+                        `Turbidity significantly differs from typical ${predictedFish} (mean ${stats.turbidity_mean.toFixed(1)} ± ${stats.turbidity_std.toFixed(1)})`
+                        );
+                } else if (turbDiff > stats.turbidity_std) {
+                    datasetAlerts.push(
+                        `Turbidity slightly off from typical ${predictedFish} (mean ${stats.turbidity_mean.toFixed(1)} ± ${stats.turbidity_std.toFixed(1)})`
+                        );
+                }
+            } else {
+                datasetAlerts.push(`No reference data available for ${predictedFish} – using general rules.`);
+            }
+
+            // ---- Risk assessment ----
+            let abnormal = 0;
+            if (!(ph >= 6.5 && ph <= 8.5)) abnormal++;
+            if (!(temperature >= 20 && temperature <= 32)) abnormal++;
+            if (turbidity > 10) abnormal++;
+
+            let risk, status;
+            if (abnormal === 0) {
+                risk = "LOW";
+                status = "Good";
+                suggestions.push("Maintain current condition and monitor regularly.");
+            } else if (abnormal === 1) {
+                risk = "MEDIUM";
+                status = "Needs Attention";
+            } else {
+                risk = "HIGH";
+                status = "Poor";
+                suggestions.push("Do not introduce sensitive fish until water stabilizes.");
+            }
+
+            // ---- Species-specific advice ----
+            if (bestFish && bestFish.species in FISH_SPECIES_RULES) {
+                const r = FISH_SPECIES_RULES[bestFish.species];
+                if (!(ph >= r.ph[0] && ph <= r.ph[1])) {
+                    suggestions.push(`Adjust pH toward ${r.ph[0]}–${r.ph[1]} for ${bestFish.species}.`);
+                }
+                if (!(temperature >= r.temperature[0] && temperature <= r.temperature[1])) {
+                    suggestions.push(`Adjust temperature toward ${r.temperature[0]}–${r.temperature[1]}°C for ${bestFish.species}.`);
+                }
+                if (!(turbidity >= r.turbidity[0] && turbidity <= r.turbidity[1])) {
+                    suggestions.push(`Reduce turbidity to ${r.turbidity[0]}–${r.turbidity[1]} NTU for ${bestFish.species}.`);
+                }
+            }
+
+            // ---- Merge alerts into problems ----
+            if (datasetAlerts.length > 0) {
+                problems.push("Deviation from species reference dataset");
+                suggestions.push(...datasetAlerts);
+            }
+
+            // ---- Unique suggestions ----
+            const uniqueSuggestions = [...new Set(suggestions)];
+            const finalAdvice = uniqueSuggestions.length > 0 ? uniqueSuggestions.join(" ") :
+                "Water condition is acceptable. Continue routine monitoring.";
+
+            // ---- Ideal / avoid ----
+            const idealFor = fishRanking.filter(f => f.score >= 2).slice(0, 3).map(f => f.species);
+            const avoidFor = fishRanking.filter(f => f.score === 0).slice(0, 3).map(f => f.species);
+
+            // ---- Recommendations (full list) ----
+            const recommendations = [];
+            if (abnormal === 0) recommendations.push("✅ All parameters optimal! Maintain current conditions.");
+            if (problems.length > 0) {
+                for (const p of problems) {
+                    recommendations.push(`⚠️ ${p}`);
+                }
+            }
+            if (datasetAlerts.length > 0) {
+                for (const a of datasetAlerts) {
+                    recommendations.push(`📊 ${a}`);
+                }
+            }
+            if (recommendations.length === 0) {
+                recommendations.push("✅ Water condition is healthy. Continue routine monitoring.");
+            }
+
+            return {
+                ph: ph,
+                temperature: temperature,
+                turbidity: turbidity,
+                ec: ec,
+                predicted_fish: predictedFish,
+                pred_image: predictedFishImage,
+                confidence_fish: confFish,
+                predicted_spice: predictedSpice,
+                confidence_spice: confSpice,
+                risk_level: risk,
+                water_status: status,
+                problems: problems,
+                advice: finalAdvice,
+                ideal_for: idealFor,
+                avoid_for: avoidFor,
+                dataset_alerts: datasetAlerts,
+                fish_ranking: fishRanking,
+                spice_ranking: spiceRanking,
+                recommendations: recommendations
+            };
+        }
+
+        // ================================================================
+        // 7. DOM REFS & UI UPDATE
+        // ================================================================
+        const gaugePhArc = document.getElementById('gaugePhArc');
+        const gaugePhVal = document.getElementById('gaugePhVal');
+        const gaugePhNum = document.getElementById('gaugePhNum');
+        const gaugeTempArc = document.getElementById('gaugeTempArc');
+        const gaugeTempVal = document.getElementById('gaugeTempVal');
+        const gaugeTempNum = document.getElementById('gaugeTempNum');
+        const gaugeTurbArc = document.getElementById('gaugeTurbArc');
+        const gaugeTurbVal = document.getElementById('gaugeTurbVal');
+        const gaugeTurbNum = document.getElementById('gaugeTurbNum');
+        const gaugeEcArc = document.getElementById('gaugeEcArc');
+        const gaugeEcVal = document.getElementById('gaugeEcVal');
+        const gaugeEcNum = document.getElementById('gaugeEcNum');
+
+        const predFishEl = document.getElementById('predFish');
+        const predFishImg = document.getElementById('predFishImg');
+        const confFishEl = document.getElementById('confFish');
+        const predSpiceEl = document.getElementById('predSpice');
+        const confSpiceEl = document.getElementById('confSpice');
+        const riskBadge = document.getElementById('riskBadge');
+        const qualityEl = document.getElementById('quality');
+        const adviceGrid = document.getElementById('adviceGrid');
+        const recList = document.getElementById('recList');
+        const datasetAlerts = document.getElementById('datasetAlerts');
+        const fishRankBody = document.getElementById('fishRankBody');
+        const spiceRankBody = document.getElementById('spiceRankBody');
+        const timestampEl = document.getElementById('timestamp');
+
+        // ================================================================
+        // 8. GAUGE UPDATE
+        // ================================================================
+        function updateGauge(arcEl, valEl, numEl, value, min, max, unit, colorThresholds) {
+            const clamped = Math.min(Math.max(value, min), max);
+            const pct = (clamped - min) / (max - min);
+            const circumference = 314;
+            const dash = pct * circumference;
+            arcEl.style.strokeDasharray = dash + ' ' + (circumference - dash);
+            let color = colorThresholds.good;
+            if (value < colorThresholds.warnLow || value > colorThresholds.warnHigh) color = colorThresholds.warning;
+            if (value < colorThresholds.dangerLow || value > colorThresholds.dangerHigh) color = colorThresholds.danger;
+            arcEl.style.stroke = color;
+            valEl.textContent = value.toFixed(1);
+            numEl.textContent = value.toFixed(1) + ' ' + unit;
+        }
+
+        // ================================================================
+        // 9. UPDATE UI
+        // ================================================================
+        function updateUI(data) {
+            // Gauges
+            updateGauge(gaugePhArc, gaugePhVal, gaugePhNum, data.ph, 0, 14, '', { good: 'var(--success)', warnLow: 6.0,
+                warnHigh: 8.0, dangerLow: 5.0, dangerHigh: 9.0 });
+            updateGauge(gaugeTempArc, gaugeTempVal, gaugeTempNum, data.temperature, 0, 40, '°C', { good: 'var(--success)',
+                warnLow: 20, warnHigh: 33, dangerLow: 15, dangerHigh: 38 });
+            updateGauge(gaugeTurbArc, gaugeTurbVal, gaugeTurbNum, data.turbidity, 0, 20, 'NTU', { good: 'var(--success)',
+                warnLow: 5, warnHigh: 12, dangerLow: 10, dangerHigh: 18 });
+            updateGauge(gaugeEcArc, gaugeEcVal, gaugeEcNum, data.ec, 0, 3.0, 'mS/cm', { good: 'var(--success)', warnLow: 1.0,
+                warnHigh: 2.0, dangerLow: 0.6, dangerHigh: 2.5 });
+
+            // Predictions
+            predFishEl.textContent = data.predicted_fish;
+            predFishImg.src = data.pred_image ||
+                'https://ui-avatars.com/api/?name=Fish&background=4b5563&color=fff&size=40';
+            confFishEl.textContent = `Confidence: ${data.confidence_fish.toFixed(0)}%`;
+            predSpiceEl.textContent = data.predicted_spice;
+            confSpiceEl.textContent = `Confidence: ${data.confidence_spice.toFixed(0)}%`;
+
+            // Risk & Quality
+            riskBadge.textContent = data.risk_level;
+            riskBadge.className = 'status-badge';
+            if (data.risk_level === 'LOW') riskBadge.classList.add('badge-low');
+            else if (data.risk_level === 'MEDIUM') riskBadge.classList.add('badge-medium');
+            else if (data.risk_level === 'HIGH') riskBadge.classList.add('badge-high');
+            else riskBadge.classList.add('badge-critical');
+            qualityEl.textContent = `Quality: ${data.water_status}`;
+
+            // Water management advice
+            const adviceData = [
+                { param: 'pH', action: getPhAdvice(data.ph), urgency: getPhUrgency(data.ph) },
+                { param: 'Temperature', action: getTempAdvice(data.temperature), urgency: getTempUrgency(data
+                        .temperature) },
+                { param: 'Turbidity', action: getTurbAdvice(data.turbidity), urgency: getTurbUrgency(data.turbidity) },
+                { param: 'EC', action: getEcAdvice(data.ec), urgency: getEcUrgency(data.ec) }
+            ];
+            adviceGrid.innerHTML = '';
+            adviceData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `advice-item ${item.urgency}`;
+                div.innerHTML = `<div class="param">${item.param}</div><div class="action">${item.action}</div>`;
+                adviceGrid.appendChild(div);
+            });
+
+            // Recommendations
+            recList.innerHTML = '';
+            if (data.recommendations && data.recommendations.length > 0) {
+                data.recommendations.forEach(r => {
+                    const li = document.createElement('li');
+                    li.textContent = r;
+                    recList.appendChild(li);
+                });
+            } else {
+                recList.innerHTML = '<li>✅ All parameters optimal! Maintain current conditions.</li>';
+            }
+
+            // Dataset alerts
+            datasetAlerts.innerHTML = '';
+            if (data.dataset_alerts && data.dataset_alerts.length > 0) {
+                data.dataset_alerts.forEach(a => {
+                    const li = document.createElement('li');
+                    li.textContent = a;
+                    datasetAlerts.appendChild(li);
+                });
+            } else {
+                datasetAlerts.innerHTML = '<li>✅ No significant deviation from species reference data.</li>';
+            }
+
+            // Fish ranking
+            fishRankBody.innerHTML = '';
+            data.fish_ranking.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                const stars = '★'.repeat(item.score) + '☆'.repeat(3 - item.score);
+                const imgUrl = item.image_url ||
+                    'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.species) +
+                    '&background=4b5563&color=fff&size=30';
+                tr.innerHTML = `
+                    <td>${idx+1}</td>
+                    <td><img src="${imgUrl}" class="species-img" alt="${item.species}"> ${item.species}</td>
+                    <td class="star">${stars}</td>
+                    <td>${item.growth_rate}</td>
+                    <td>${item.market_value}</td>
+                    <td>${item.hardiness}</td>
+                    <td>${item.count}</td>
+                `;
+                fishRankBody.appendChild(tr);
+            });
+
+            // Spice ranking
+            spiceRankBody.innerHTML = '';
+            data.spice_ranking.slice(0, 10).forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                const stars = '★'.repeat(item.score) + '☆'.repeat(3 - item.score);
+                tr.innerHTML =
+                    `<td>${idx+1}</td><td>${item.icon} ${item.spice}</td><td class="star">${stars}</td><td>${item.growth_time}</td><td>${item.yield}</td><td>${item.difficulty}</td>`;
+                spiceRankBody.appendChild(tr);
+            });
+
+            timestampEl.textContent = `🕒 Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        // ================================================================
+        // 10. ADVICE HELPERS
+        // ================================================================
+        function getPhAdvice(ph) {
+            if (ph < 6.0) return '⚠️ pH too low! Add agricultural lime or potassium bicarbonate.';
+            if (ph < 6.5) return 'pH slightly low – add lime to bring to 6.5–7.5.';
+            if (ph > 8.5) return '⚠️ pH too high! Reduce using phosphoric acid or organic matter.';
+            if (ph > 7.5) return 'pH slightly high – consider acidifying for optimal plant growth.';
+            return '✅ pH optimal (6.5–7.5).';
+        }
+
+        function getPhUrgency(ph) {
+            if (ph < 6.0 || ph > 8.5) return 'urgent';
+            if (ph < 6.5 || ph > 7.5) return 'warning';
+            return 'good';
+        }
+
+        function getTempAdvice(temp) {
+            if (temp < 20) return '❄️ Too cold! Use heater or choose cold-tolerant species.';
+            if (temp < 24) return 'Cool – good for herbs; fish may grow slower.';
+            if (temp > 32) return '🔥 Too hot! Increase aeration, add shade, refresh water.';
+            if (temp > 30) return 'Warm – acceptable for tropical fish, but monitor.';
+            return '✅ Temperature optimal (24–30°C).';
+        }
+
+        function getTempUrgency(temp) {
+            if (temp < 20 || temp > 32) return 'urgent';
+            if (temp < 24 || temp > 30) return 'warning';
+            return 'good';
+        }
+
+        function getTurbAdvice(turb) {
+            if (turb > 10) return '⚠️ Very cloudy! Improve filtration, reduce feeding, partial water change.';
+            if (turb > 5) return 'Moderate turbidity – monitor and clean filters.';
+            return '✅ Water clear (≤5 NTU).';
+        }
+
+        function getTurbUrgency(turb) {
+            if (turb > 10) return 'urgent';
+            if (turb > 5) return 'warning';
+            return 'good';
+        }
+
+        function getEcAdvice(ec) {
+            if (ec < 0.8) return '⚠️ EC too low – nutrients insufficient. Add feed or nutrients.';
+            if (ec < 1.2) return 'EC low – good for leafy greens, add minerals for fish.';
+            if (ec > 2.0) return '⚠️ EC too high – possible toxicity. Dilute with fresh water.';
+            if (ec > 1.8) return 'EC high – monitor salt accumulation, partial water change.';
+            return '✅ EC optimal (1.2–1.8).';
+        }
+
+        function getEcUrgency(ec) {
+            if (ec < 0.8 || ec > 2.0) return 'urgent';
+            if (ec < 1.2 || ec > 1.8) return 'warning';
+            return 'good';
+        }
+
+        // ================================================================
+        // 11. MODES
+        // ================================================================
+        let currentMode = 'auto';
+        let manualData = null;
+        let lastFirebaseData = null;
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            const manualInputs = document.getElementById('manualInputs');
+            if (mode === 'manual') {
+                manualInputs.classList.add('active');
+                if (manualData) {
+                    const result = analyzeWater(manualData.ph, manualData.temp, manualData.turb);
+                    updateUI(result);
+                } else {
+                    manualAnalyze();
+                }
+            } else {
+                manualInputs.classList.remove('active');
+                if (lastFirebaseData) {
+                    const result = analyzeWater(lastFirebaseData.ph, lastFirebaseData.temp, lastFirebaseData.turb);
+                    updateUI(result);
+                }
+            }
+        }
+
+        function manualAnalyze() {
+            const ph = parseFloat(document.getElementById('manPh').value);
+            const temp = parseFloat(document.getElementById('manTemp').value);
+            const turb = parseFloat(document.getElementById('manTurb').value);
+            if (isNaN(ph) || isNaN(temp) || isNaN(turb)) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            manualData = { ph, temp, turb };
+            const result = analyzeWater(ph, temp, turb);
+            updateUI(result);
+        }
+
+        // ================================================================
+        // 12. FIREBASE LISTENER
+        // ================================================================
+        const sensorsRef = db.ref('aquaculture/sensors');
+        sensorsRef.on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+                const ph = val.ph || 0;
+                const temp = val.temperature || 0;
+                const turb = val.turbidity || 0;
+                if (ph > 0 || temp > 0 || turb > 0) {
+                    lastFirebaseData = { ph, temp, turb };
+                    if (currentMode === 'auto') {
+                        const result = analyzeWater(ph, temp, turb);
+                        updateUI(result);
+                    }
+                } else {
+                    const demo = { ph: 7.2, temp: 27.5, turb: 4.8 };
+                    lastFirebaseData = demo;
+                    if (currentMode === 'auto') {
+                        const result = analyzeWater(demo.ph, demo.temp, demo.turb);
+                        updateUI(result);
+                    }
+                }
+            } else {
+                const demo = { ph: 7.2, temp: 27.5, turb: 4.8 };
+                lastFirebaseData = demo;
+                if (currentMode === 'auto') {
+                    const result = analyzeWater(demo.ph, demo.temp, demo.turb);
+                    updateUI(result);
+                }
+            }
+        }, (error) => {
+            console.error('Firebase read error:', error);
+            const demo = { ph: 7.0, temp: 26.0, turb: 5.0 };
+            lastFirebaseData = demo;
+            if (currentMode === 'auto') {
+                const result = analyzeWater(demo.ph, demo.temp, demo.turb);
+                updateUI(result);
+            }
+        });
+
+        // ================================================================
+        // 13. THEME TOGGLE
+        // ================================================================
+        function toggleTheme() {
+            const toggle = document.getElementById('themeToggle');
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            if (isLight) {
+                document.documentElement.removeAttribute('data-theme');
+                toggle.classList.remove('active');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                toggle.classList.add('active');
+            }
+        }
+
+        // ================================================================
+        // 14. MODAL
+        // ================================================================
+        function openModal() {
+            document.getElementById('instructionsModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('instructionsModal').classList.remove('active');
+        }
+        document.getElementById('instructionsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ================================================================
+        // 15. PARTICLES
+        // ================================================================
+        (function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.bottom = (-10 - Math.random() * 30) + 'px';
+                p.style.animationDuration = (12 + Math.random() * 14) + 's';
+                p.style.animationDelay = (-Math.random() * 14) + 's';
+                p.style.width = p.style.height = (6 + Math.random() * 12) + 'px';
+                container.appendChild(p);
+            }
+        })();
+
+        // ================================================================
+        // 16. INITIAL LOAD
+        // ================================================================
+        setTimeout(() => {
+            if (!lastFirebaseData) {
+                const demo = { ph: 7.2, temp: 27.5, turb: 4.8 };
+                lastFirebaseData = demo;
+                if (currentMode === 'auto') {
+                    const result = analyzeWater(demo.ph, demo.temp, demo.turb);
+                    updateUI(result);
+                }
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
